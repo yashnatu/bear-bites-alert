@@ -112,9 +112,11 @@ const ClubPortal = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold">🐻</span>
-          </div>
+          <img 
+            src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
+            alt="BearBites Logo" 
+            className="w-8 h-8 object-contain mx-auto mb-4"
+          />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
@@ -144,9 +146,11 @@ const ClubPortal = () => {
                 Back to Home
               </Link>
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">🐻</span>
-                </div>
+                <img 
+                  src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
+                  alt="BearBites Logo" 
+                  className="w-8 h-8 object-contain"
+                />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">BearBites Club Portal</h1>
                   {profile && (

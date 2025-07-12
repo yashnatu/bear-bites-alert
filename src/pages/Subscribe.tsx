@@ -75,9 +75,11 @@ const Subscribe = () => {
               Back to Home
             </Link>
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">🐻</span>
-              </div>
+              <img 
+                src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
+                alt="BearBites Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <h1 className="text-xl font-bold text-gray-900">BearBites</h1>
             </div>
           </div>

@@ -69,9 +69,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">🐻</span>
-              </div>
+              <img 
+                src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
+                alt="BearBites Logo" 
+                className="w-10 h-10 object-contain"
+              />
               <h1 className="text-2xl font-bold text-gray-900">BearBites</h1>
             </div>
             <nav className="flex items-center space-x-6">
@@ -194,9 +196,11 @@ const Index = () => {
       <footer className="bg-gray-900 text-white py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">🐻</span>
-            </div>
+            <img 
+              src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
+              alt="BearBites Logo" 
+              className="w-8 h-8 object-contain"
+            />
             <h4 className="text-xl font-bold">BearBites</h4>
           </div>
           <p className="text-gray-400">Connecting UC Berkeley students with free food opportunities</p>
