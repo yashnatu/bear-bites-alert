@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Subscribe = () => {
   const [email, setEmail] = useState('');
@@ -28,15 +29,29 @@ const Subscribe = () => {
 
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const { error } = await supabase
+        .from('subscribers')
+        .insert([{ email }]);
+
+      if (error) {
+        throw error;
+      }
+
       setIsSubmitted(true);
-      setIsLoading(false);
       toast({
         title: "Successfully Subscribed!",
         description: "You'll now receive food alerts from campus clubs.",
       });
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Subscription Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (isSubmitted) {
