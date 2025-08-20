@@ -5,61 +5,72 @@ import { Clock, MapPin, Users, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FoodAlert {
   id: string;
-  clubName: string;
-  foodType: string;
+  club_name: string;
+  food_type: string;
   quantity: string;
-  availableUntil: string;
+  available_until: string;
   building: string;
   room: string;
-  timePosted: string;
+  created_at: string;
 }
 
 const Index = () => {
-  const [activeAlerts, setActiveAlerts] = useState<FoodAlert[]>([
-    {
-      id: '1',
-      clubName: 'Computer Science Club',
-      foodType: 'Pizza and Sodas',
-      quantity: '20 boxes',
-      availableUntil: '3:00 PM',
-      building: 'Soda Hall',
-      room: '306',
-      timePosted: '1:30 PM'
-    },
-    {
-      id: '2',
-      clubName: 'Business Society',
-      foodType: 'Sandwiches and Chips',
-      quantity: '15 portions',
-      availableUntil: '4:30 PM',
-      building: 'Haas School',
-      room: 'C135',
-      timePosted: '2:15 PM'
+  const [activeAlerts, setActiveAlerts] = useState<FoodAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch active alerts from Supabase
+  const fetchActiveAlerts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('food_alerts')
+        .select('*')
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching alerts:', error);
+        return;
+      }
+
+      setActiveAlerts(data || []);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
-  // Simulate real-time updates
+  // Set up real-time subscription and initial fetch
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      setActiveAlerts(alerts => 
-        alerts.filter(alert => {
-          const [hours, minutes, period] = alert.availableUntil.split(/[: ]/);
-          const alertTime = new Date();
-          alertTime.setHours(
-            period === 'PM' && hours !== '12' ? parseInt(hours) + 12 : parseInt(hours),
-            parseInt(minutes),
-            0
-          );
-          return alertTime > now;
-        })
-      );
-    }, 60000); // Check every minute
+    fetchActiveAlerts();
 
-    return () => clearInterval(interval);
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'food_alerts'
+        },
+        (payload) => {
+          const newAlert = payload.new as FoodAlert;
+          // Only add if it's still active
+          if (new Date(newAlert.created_at + 'T' + newAlert.available_until) > new Date()) {
+            setActiveAlerts(prev => [newAlert, ...prev]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -140,11 +151,11 @@ const Index = () => {
                 <Card key={alert.id} className="hover:shadow-lg transition-shadow duration-200 border-l-4 border-l-orange-500">
                   <CardHeader>
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg text-blue-900">{alert.clubName}</CardTitle>
+                      <CardTitle className="text-lg text-blue-900">{alert.club_name}</CardTitle>
                       <Badge className="bg-green-100 text-green-800">Active</Badge>
                     </div>
                     <CardDescription className="text-base font-medium text-gray-900">
-                      {alert.foodType}
+                      {alert.food_type}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -154,14 +165,14 @@ const Index = () => {
                     </div>
                     <div className="flex items-center text-gray-600">
                       <Clock className="w-4 h-4 mr-2" />
-                      <span className="text-sm">Until {alert.availableUntil}</span>
+                      <span className="text-sm">Until {alert.available_until}</span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <MapPin className="w-4 h-4 mr-2" />
                       <span className="text-sm">{alert.building}, Room {alert.room}</span>
                     </div>
                     <div className="pt-2 border-t">
-                      <span className="text-xs text-gray-500">Posted at {alert.timePosted}</span>
+                      <span className="text-xs text-gray-500">Posted {new Date(alert.created_at).toLocaleString()}</span>
                     </div>
                   </CardContent>
                 </Card>
