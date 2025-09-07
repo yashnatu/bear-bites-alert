@@ -99,3 +99,5 @@ CREATE POLICY "Anyone can subscribe"
   ON public.subscribers 
   FOR INSERT 
   WITH CHECK (true);
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS terms_accepted boolean NOT NULL DEFAULT false;

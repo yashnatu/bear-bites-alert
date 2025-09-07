@@ -66,6 +66,7 @@ export type Database = {
           created_at: string
           id: string
           updated_at: string
+          terms_accepted: boolean
         }
         Insert: {
           club_email: string
@@ -73,6 +74,7 @@ export type Database = {
           created_at?: string
           id: string
           updated_at?: string
+          terms_accepted?: boolean
         }
         Update: {
           club_email?: string
@@ -80,6 +82,7 @@ export type Database = {
           created_at?: string
           id?: string
           updated_at?: string
+          terms_accepted?: boolean
         }
         Relationships: []
       }

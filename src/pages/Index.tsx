@@ -6,6 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+//import { useDarkMode } from '../App';
+import { Sun, Moon } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface FoodAlert {
   id: string;
@@ -21,6 +34,9 @@ interface FoodAlert {
 const Index = () => {
   const [activeAlerts, setActiveAlerts] = useState<FoodAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  //const { darkMode, toggleDarkMode } = useDarkMode();
+  const [darkMode, setDarkMode] = useState(false);
+  const { user, signOut } = useAuth();
 
   // Fetch active alerts from Supabase
   const fetchActiveAlerts = async () => {
@@ -76,7 +92,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-3">
@@ -85,10 +101,10 @@ const Index = () => {
                 alt="BearBites Logo" 
                 className="w-10 h-10 object-contain"
               />
-              <h1 className="text-2xl font-bold text-gray-900">BearBites</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BearBites</h1>
             </div>
             <nav className="flex items-center space-x-6">
-              <Link to="/subscribe" className="text-gray-600 hover:text-blue-600 transition-colors">
+              <Link to="/subscribe" className="text-gray-600 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 Subscribe
               </Link>
               <Link to="/club-portal">
@@ -96,6 +112,42 @@ const Index = () => {
                   Club Portal
                 </Button>
               </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center ml-4">
+                    <Switch
+                      checked={darkMode}
+                      //onCheckedChange={() => setDarkMode(!darkMode)}
+                      aria-label="Toggle dark mode"
+                      className="data-[state=checked]:bg-gray-800 data-[state=unchecked]:bg-gray-200"
+                    >
+                      {darkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-gray-800" />}
+                    </Switch>
+                    <span className="ml-2">{darkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-gray-800" />}</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Toggle dark mode</TooltipContent>
+              </Tooltip>
+              {user && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="ml-4 focus:outline-none">
+                      <Avatar>
+                        <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
+                        <AvatarFallback>{user.email?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
+                      </Avatar>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <div className="px-4 py-2">
+                      <div className="font-bold">{user.user_metadata?.full_name || user.email}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={signOut} className="cursor-pointer">Sign Out</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </nav>
           </div>
         </div>
@@ -194,7 +246,8 @@ const Index = () => {
             />
             <h4 className="text-xl font-bold">BearBites</h4>
           </div>
-          <p className="text-gray-400">Connecting UC Berkeley students with free food opportunities</p>
+          <p className="text-gray-400">Connecting UC Berkeley students with free food opportunities.</p>
+          <p className="text-gray-400">All rights reserved. © 2025 BearBites</p>
         </div>
       </footer>
     </div>

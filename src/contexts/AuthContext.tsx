@@ -2,12 +2,12 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signUp: (email: string, password: string, clubName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Set up auth state listener
@@ -47,28 +48,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, clubName: string) => {
-    const redirectUrl = `${window.location.origin}/club-portal`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          club_name: clubName
+  // Enforce @berkeley.edu Google account and terms acceptance
+  useEffect(() => {
+    const checkTerms = async () => {
+      if (user && user.email) {
+        if (!user.email.endsWith('@berkeley.edu')) {
+          await signOut();
+          navigate('/error', { replace: true });
+          return;
+        }
+        // Check terms acceptance
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('terms_accepted')
+          .eq('id', user.id)
+          .single();
+        if (!error && data && !data.terms_accepted) {
+          navigate('/terms', { replace: true });
         }
       }
-    });
-    return { error };
-  };
+    };
+    checkTerms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    return { error };
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({ provider: 'google' });
   };
 
   const signOut = async () => {
@@ -80,8 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider value={{
       user,
       session,
-      signUp,
-      signIn,
+      signInWithGoogle,
       signOut,
       loading
     }}>
