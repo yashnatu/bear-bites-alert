@@ -56,7 +56,7 @@ const Subscribe = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -80,12 +80,12 @@ const Subscribe = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-4">
-            <Link to="/" className="flex items-center text-gray-600 hover:text-blue-600 transition-colors mr-4">
+            <Link to="/" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-4">
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Home
             </Link>
@@ -95,7 +95,7 @@ const Subscribe = () => {
                 alt="BearBites Logo" 
                 className="w-8 h-8 object-contain"
               />
-              <h1 className="text-xl font-bold text-gray-900">BearBites</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">BearBites</h1>
             </div>
           </div>
         </div>

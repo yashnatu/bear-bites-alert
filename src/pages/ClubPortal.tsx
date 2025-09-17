@@ -14,10 +14,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 const ClubPortal = () => {
   const { user, session, signOut, loading } = useAuth();
-  const [profile, setProfile] = useState<{ club_name: string; club_email: string } | null>(null);
+  const [profile, setProfile] = useState<{ club_name: string; club_email: string; terms_accepted: boolean } | null>(null);
   const [formData, setFormData] = useState({
     foodType: '',
     quantity: '',
+    availableDate: '', // new field for date
     availableUntil: '',
     building: '',
     room: '',
@@ -31,7 +32,7 @@ const ClubPortal = () => {
       const fetchProfile = async () => {
         const { data, error } = await supabase
           .from('profiles')
-          .select('club_name, club_email')
+          .select('club_name, club_email, terms_accepted')
           .eq('id', user.id)
           .single();
         
@@ -57,10 +58,28 @@ const ClubPortal = () => {
     setIsSubmitting(true);
 
     try {
-      // Calculate expiration time (today's date + available until time)
-      const today = new Date();
-      const [hours, minutes] = formData.availableUntil.split(':');
-      const expiresAt = new Date(today.getFullYear(), today.getMonth(), today.getDate(), parseInt(hours), parseInt(minutes));
+      // Combine date and time for expiration
+      const [year, month, day] = formData.availableDate.split('-').map(Number);
+      const [hours, minutes] = formData.availableUntil.split(':').map(Number);
+      const expiresAt = new Date(year, month - 1, day, hours, minutes);
+
+      // Validate that the selected date/time is not in the past (Pacific timezone)
+      // Create current time in Pacific timezone (handles PST/PDT automatically)
+      const nowInPacific = new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"});
+      const currentPacificTime = new Date(nowInPacific);
+      
+      // Create the selected time assuming it's in Pacific timezone
+      const selectedPacificTime = new Date(`${formData.availableDate}T${formData.availableUntil}:00`);
+      
+      if (selectedPacificTime <= currentPacificTime) {
+        toast({
+          title: "Invalid Date/Time",
+          description: "Food alert date and time must be in the future (Pacific timezone).",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       const { error } = await supabase
         .from('food_alerts')
@@ -74,7 +93,7 @@ const ClubPortal = () => {
           building: formData.building,
           room: formData.room,
           additional_info: formData.additionalInfo,
-          expires_at: expiresAt.toISOString()
+          expires_at: expiresAt.toISOString(),
         });
 
       if (error) {
@@ -85,11 +104,23 @@ const ClubPortal = () => {
         title: "Food Alert Sent!",
         description: "Your food notification has been posted successfully.",
       });
-      
+      // Send email to all subscribers
+      await fetch('https://taokuapzuxmtpznvkuuu.functions.supabase.co/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          club_name: profile.club_name,
+          food_type: formData.foodType,
+          building: formData.building,
+          room: formData.room,
+          available_until: `${formData.availableDate} until ${formData.availableUntil}`,
+        }),
+      });
       // Reset form
       setFormData({
         foodType: '',
         quantity: '',
+        availableDate: '',
         availableUntil: '',
         building: '',
         room: '',
@@ -128,6 +159,11 @@ const ClubPortal = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  // Redirect to terms if not accepted
+  if (profile && !profile.terms_accepted) {
+    return <Navigate to="/terms?redirect=%2Fclub-portal" replace />;
+  }
+
   const buildings = [
     'Soda Hall', 'Wheeler Hall', 'Dwinelle Hall', 'Evans Hall', 'Pimentel Hall',
     'Haas School of Business', 'Cory Hall', 'Etcheverry Hall', 'Stanley Hall',
@@ -135,9 +171,9 @@ const ClubPortal = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center">
@@ -211,7 +247,20 @@ const ClubPortal = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="availableUntil">Available Until *</Label>
+                    <Label htmlFor="availableDate">Available Date * (Pacific Time)</Label>
+                    <Input
+                      id="availableDate"
+                      type="date"
+                      value={formData.availableDate}
+                      onChange={(e) => handleInputChange('availableDate', e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="availableUntil">Available Until (Time) * (Pacific Time)</Label>
                     <Input
                       id="availableUntil"
                       type="time"
@@ -220,9 +269,6 @@ const ClubPortal = () => {
                       required
                     />
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="building">Building *</Label>
                     <Select onValueChange={(value) => handleInputChange('building', value)}>
@@ -238,6 +284,9 @@ const ClubPortal = () => {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="room">Room Number *</Label>
                     <Input
@@ -272,14 +321,21 @@ const ClubPortal = () => {
                 </Button>
               </form>
 
-              <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-semibold text-blue-900 mb-2">📧 What happens next?</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
+              <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h4 className="font-semibold text-blue-900 dark:text-blue-300 mb-2">📧 What happens next?</h4>
+                <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                   <li>• Alert posted immediately for all students to see</li>
                   <li>• Alert appears on the homepage until expiration time</li>
                   <li>• Students can see location and availability details</li>
                   <li>• Alert automatically expires at the specified time</li>
                 </ul>
+              </div>
+
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                <h4 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-1">⏰ Timezone Note</h4>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                  All times are in Pacific Time (PST/PDT). Make sure your date and time are in the future!
+                </p>
               </div>
             </CardContent>
           </Card>
