@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { AppHeader } from '@/components/AppHeader';
 
 const ClubPortal = () => {
   const { user, session, signOut, loading } = useAuth();
@@ -25,6 +26,7 @@ const ClubPortal = () => {
     additionalInfo: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState<number>(0);
 
   // Fetch user profile
   useEffect(() => {
@@ -55,7 +57,22 @@ const ClubPortal = () => {
     e.preventDefault();
     if (!user || !profile) return;
     
+    // Prevent duplicate submissions
+    if (isSubmitting) return;
+    
+    // Prevent rapid successive submissions (minimum 2 seconds between submissions)
+    const now = Date.now();
+    if (now - lastSubmissionTime < 2000) {
+      toast({
+        title: "Please Wait",
+        description: "Please wait a moment before submitting another alert.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
+    setLastSubmissionTime(now);
 
     try {
       // Combine date and time for expiration
@@ -78,6 +95,28 @@ const ClubPortal = () => {
           variant: "destructive",
         });
         setIsSubmitting(false);
+        return;
+      }
+
+      // Check for recent duplicate submissions (same club, food type, and time within last 5 minutes)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data: recentAlerts, error: checkError } = await supabase
+        .from('food_alerts')
+        .select('id')
+        .eq('club_id', user.id)
+        .eq('food_type', formData.foodType)
+        .eq('building', formData.building)
+        .eq('room', formData.room)
+        .gte('created_at', fiveMinutesAgo);
+
+      if (checkError) {
+        console.error('Error checking for duplicates:', checkError);
+      } else if (recentAlerts && recentAlerts.length > 0) {
+        toast({
+          title: "Duplicate Alert Detected",
+          description: "A similar food alert was recently posted. Please wait before posting another.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -104,18 +143,24 @@ const ClubPortal = () => {
         title: "Food Alert Sent!",
         description: "Your food notification has been posted successfully.",
       });
-      // Send email to all subscribers
-      await fetch('https://taokuapzuxmtpznvkuuu.functions.supabase.co/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          club_name: profile.club_name,
-          food_type: formData.foodType,
-          building: formData.building,
-          room: formData.room,
-          available_until: `${formData.availableDate} until ${formData.availableUntil}`,
-        }),
-      });
+      
+      // Send email to all subscribers (non-blocking - don't fail if email fails)
+      try {
+        await fetch('https://taokuapzuxmtpznvkuuu.functions.supabase.co/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            club_name: profile.club_name,
+            food_type: formData.foodType,
+            building: formData.building,
+            room: formData.room,
+            available_until: `${formData.availableDate} until ${formData.availableUntil}`,
+          }),
+        });
+      } catch (emailError) {
+        console.error('Failed to send email notifications:', emailError);
+        // Don't show error to user since the alert was posted successfully
+      }
       // Reset form
       setFormData({
         foodType: '',
@@ -172,41 +217,10 @@ const ClubPortal = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center">
-              <Link to="/" className="flex items-center text-gray-600 hover:text-blue-600 transition-colors mr-4">
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Home
-              </Link>
-              <div className="flex items-center space-x-3">
-                <img 
-                  src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
-                  alt="BearBites Logo" 
-                  className="w-8 h-8 object-contain"
-                />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">BearBites Club Portal</h1>
-                  {profile && (
-                    <p className="text-sm text-gray-600">Welcome, {profile.club_name}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <Button 
-              onClick={signOut}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
-          </div>
-        </div>
-      </header>
+      <AppHeader 
+        title={profile ? `BearBites Club Portal - Welcome, ${profile.club_name}` : "BearBites Club Portal"} 
+        showBackButton={true} 
+      />
 
       <div className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
@@ -313,11 +327,20 @@ const ClubPortal = () => {
 
                 <Button 
                   type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSubmitting}
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  {isSubmitting ? 'Posting Alert...' : 'Post Food Alert'}
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      Posting Alert...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Post Food Alert
+                    </>
+                  )}
                 </Button>
               </form>
 

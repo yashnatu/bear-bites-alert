@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AppHeader } from '@/components/AppHeader';
 
 const Subscribe = () => {
   const [email, setEmail] = useState('');
@@ -81,25 +82,7 @@ const Subscribe = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center py-4">
-            <Link to="/" className="flex items-center text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-4">
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Home
-            </Link>
-            <div className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
-                alt="BearBites Logo" 
-                className="w-8 h-8 object-contain"
-              />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">BearBites</h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader showBackButton={true} showAuth={false} />
 
       <div className="flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8">
         <Card className="w-full max-w-md">
@@ -148,9 +131,9 @@ const Subscribe = () => {
               </Button>
             </form>
             
-            <div className="mt-6 pt-6 border-t">
-              <h4 className="font-semibold text-gray-900 mb-2">What you'll receive:</h4>
-              <ul className="text-sm text-gray-600 space-y-1">
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">What you'll receive:</h4>
+              <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                 <li>• Real-time food alerts from campus clubs</li>
                 <li>• Location and availability details</li>
                 <li>• No spam - only food notifications</li>

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { AppHeader } from '@/components/AppHeader';
 
 interface FoodAlert {
   id: string;
@@ -60,48 +61,40 @@ export default function MyAlerts() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-8">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center text-blue-600 hover:text-blue-800 font-medium mr-4"
-        >
-          <ArrowLeft className="w-5 h-5 mr-1" />
-          Back to Home
-        </button>
-        <div className="flex-1 flex justify-center">
-          <h1 className="text-2xl font-bold">My Food Alerts</h1>
-        </div>
-        <div className="w-32" /> {/* Spacer to balance the left button */}
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AppHeader title="My Food Alerts" showBackButton={true} />
+      <div className="max-w-4xl mx-auto p-8">
       {alerts.length === 0 ? (
-        <Card className="p-8 text-center">You have not posted any food alerts yet.</Card>
+        <Card className="p-8 text-center text-gray-900 dark:text-gray-100">
+          You have not posted any food alerts yet.
+        </Card>
       ) : (
-        <div className="overflow-x-auto rounded-lg shadow border">
-          <table className="min-w-full text-sm bg-white rounded-lg">
-            <thead className="bg-blue-50 sticky top-0 z-10">
+        <div className="overflow-x-auto rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <table className="min-w-full text-sm bg-white dark:bg-gray-800 rounded-lg">
+            <thead className="bg-blue-50 dark:bg-gray-700 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 border-b font-semibold text-left">Date Posted</th>
-                <th className="px-4 py-3 border-b font-semibold text-left">Food Type</th>
-                <th className="px-4 py-3 border-b font-semibold text-left">Location</th>
-                <th className="px-4 py-3 border-b font-semibold text-left">Quantity</th>
-                <th className="px-4 py-3 border-b font-semibold text-left">Expires At</th>
+                <th className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 font-semibold text-left text-gray-900 dark:text-gray-100">Date Posted</th>
+                <th className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 font-semibold text-left text-gray-900 dark:text-gray-100">Food Type</th>
+                <th className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 font-semibold text-left text-gray-900 dark:text-gray-100">Location</th>
+                <th className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 font-semibold text-left text-gray-900 dark:text-gray-100">Quantity</th>
+                <th className="px-4 py-3 border-b border-gray-200 dark:border-gray-600 font-semibold text-left text-gray-900 dark:text-gray-100">Expires At</th>
               </tr>
             </thead>
             <tbody>
               {alerts.map((alert, i) => (
-                <tr key={alert.id} className={i % 2 === 0 ? 'bg-white' : 'bg-blue-50/50'}>
-                  <td className="px-4 py-2 border-b">{new Date(alert.created_at).toLocaleString()}</td>
-                  <td className="px-4 py-2 border-b">{alert.food_type}</td>
-                  <td className="px-4 py-2 border-b">{alert.building}, Room {alert.room}</td>
-                  <td className="px-4 py-2 border-b">{alert.quantity}</td>
-                  <td className="px-4 py-2 border-b">{new Date(alert.expires_at).toLocaleString()}</td>
+                <tr key={alert.id} className={i % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-blue-50/50 dark:bg-gray-700/50'}>
+                  <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{new Date(alert.created_at).toLocaleString()}</td>
+                  <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{alert.food_type}</td>
+                  <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{alert.building}, Room {alert.room}</td>
+                  <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{alert.quantity}</td>
+                  <td className="px-4 py-2 border-b border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100">{new Date(alert.expires_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 }

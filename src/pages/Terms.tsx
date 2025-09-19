@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { AppHeader } from '@/components/AppHeader';
 
 const Terms = () => {
   const { user } = useAuth();
@@ -37,8 +38,10 @@ const Terms = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded shadow p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AppHeader title="Terms and Conditions" showAuth={false} />
+      <div className="flex items-center justify-center py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded shadow p-8">
         <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Terms and Conditions</h1>
         <div className="mb-6 text-gray-700 dark:text-gray-300 space-y-2">
           <p>Welcome to BearBites! Before you can use the club portal, you must agree to the following terms:</p>
@@ -56,6 +59,7 @@ const Terms = () => {
         </Button>
       </div>
     </div>
+  </div>
   );
 };
 

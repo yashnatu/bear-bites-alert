@@ -6,20 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-//import { useDarkMode } from '../App';
-import { Sun, Moon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDarkMode } from '@/contexts/DarkModeContext';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
+import { AppHeader } from '@/components/AppHeader';
 
 interface FoodAlert {
   id: string;
@@ -30,15 +18,14 @@ interface FoodAlert {
   building: string;
   room: string;
   created_at: string;
+  expires_at: string;
 }
 
 const Index = () => {
   const [activeAlerts, setActiveAlerts] = useState<FoodAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const { darkMode, toggleDarkMode } = useDarkMode();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Fetch active alerts from Supabase
   const fetchActiveAlerts = async () => {
@@ -79,7 +66,7 @@ const Index = () => {
         (payload) => {
           const newAlert = payload.new as FoodAlert;
           // Only add if it's still active
-          if (new Date(newAlert.created_at + 'T' + newAlert.available_until) > new Date()) {
+          if (new Date(newAlert.expires_at) > new Date()) {
             setActiveAlerts(prev => [newAlert, ...prev]);
           }
         }
@@ -103,68 +90,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 shadow-sm border-b dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/916b0df3-f3b3-464e-b06c-d2fc69776b63.png" 
-                alt="BearBites Logo" 
-                className="w-10 h-10 object-contain"
-              />
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">BearBites</h1>
-            </div>
-            <nav className="flex items-center space-x-6">
-              {!user && (
-                <Link to="/auth?redirect=%2F">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Sign In
-                  </Button>
-                </Link>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center ml-4">
-                    <Switch
-                      checked={darkMode}
-                      onCheckedChange={toggleDarkMode}
-                      aria-label="Toggle dark mode"
-                      className="data-[state=checked]:bg-gray-800 data-[state=unchecked]:bg-gray-200"
-                    >
-                      {darkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-gray-800" />}
-                    </Switch>
-                    <span className="ml-2">{darkMode ? <Moon className="w-4 h-4 text-yellow-400" /> : <Sun className="w-4 h-4 text-gray-800 dark:text-gray-200" />}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Toggle dark mode</TooltipContent>
-              </Tooltip>
-              {user && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="ml-4 focus:outline-none">
-                      <Avatar>
-                        <AvatarImage src={user.user_metadata?.avatar_url} alt={user.email} />
-                        <AvatarFallback>{user.email?.[0]?.toUpperCase() ?? '?'}</AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <div className="px-4 py-2">
-                      <div className="font-bold">{user.user_metadata?.full_name || user.email}</div>
-                      <div className="text-xs text-gray-500">{user.email}</div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate('/my-alerts')} className="cursor-pointer">My Food Alerts</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={signOut} className="cursor-pointer">Sign Out</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </nav>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* Hero Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
@@ -230,7 +156,13 @@ const Index = () => {
                     </div>
                     <div className="flex items-center text-gray-600 dark:text-gray-300">
                       <Clock className="w-4 h-4 mr-2" />
-                      <span className="text-sm">Until {alert.available_until}</span>
+                      <span className="text-sm">Until {new Date(alert.expires_at).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}</span>
                     </div>
                     <div className="flex items-center text-gray-600 dark:text-gray-300">
                       <MapPin className="w-4 h-4 mr-2" />
